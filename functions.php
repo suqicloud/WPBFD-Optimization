@@ -275,6 +275,7 @@ function disableAuthorUrl(){
        exit();
     }
 }
+//author大概率可能不使用你的主题 取决于主题
 
 //移除comment-reply.min.js(如果不用评论)
 function crunchify_clean_header_hook() {
