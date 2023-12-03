@@ -30,10 +30,10 @@ function optimize_postmeta_page() {
     h2 {
         font-size: 1.5em;
         color: #444;
-        margin-bottom: 0; /* Remove the margin at the bottom of the heading */
+        margin-bottom: 0;
     }
 
-    .optimize-submit { /* Changed from .submit to .optimize-submit */
+    .optimize-submit {
         display: inline-block;
         color: #fff;
         padding: 1px;
@@ -41,7 +41,7 @@ function optimize_postmeta_page() {
         text-decoration: none;
         font-size: 1em;
         transition: background-color 0.3s ease;
-        margin-top: 1px; /* Add a smaller margin at the top of the button */
+        margin-top: 1px;
     }
 
     .optimize-plugin-notice.custom-notice {
@@ -481,7 +481,7 @@ function optimize_postmeta_page() {
 
 
     <script>
-        // Move success messages after corresponding forms
+         
         document.addEventListener('DOMContentLoaded', function () {
             var successMessages = document.querySelectorAll('.optimize-plugin-notice');
             successMessages.forEach(function (message) {
