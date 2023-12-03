@@ -14,8 +14,9 @@ Wordpress cache optimization
 
 基础功能优化代码结构：
 
-//隐藏仪表盘的站点健康状态
+
 注册 register_setting('');
+
 设置 add_settings_field('');
 
 用function 调用函数去判断执行
