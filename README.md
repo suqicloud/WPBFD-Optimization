@@ -1,6 +1,8 @@
 # WPBFD Optimization
 Wordpress cache optimization
 
+精力有限，大部分代码都是网上公开的文档、拆解其他插件和ai，然后整合的。
+
 1、插件可能不兼容你的网站(和主题或者其他插件冲突)，如果你在主题functions.php里面加过相关功能代码，先去删掉
 
 2、先禁用其他优化插件(比如Autoptimize、WP Super Cache等)，测试正常之后，再去启用这些插件；如果你网站开启了CDN，去刷新下CDN再看
