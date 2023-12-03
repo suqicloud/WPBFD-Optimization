@@ -62,104 +62,15 @@ function wpbfd_optimize_enqueue_styles() {
                 width: 48%;
             }
 
-            .switch {
-                position: relative;
-                display: inline-block;
-                width: 60px;
-                height: 34px;
-            }
-
-            .switch input { 
-                opacity: 0;
-                width: 0;
-                height: 0;
-            }
-
-            .slider {
-                position: absolute;
-                cursor: pointer;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: #ccc;
-                -webkit-transition: .4s;
-                transition: .4s;
-            }
-
-            .slider:before {
-                position: absolute;
-                content: "";
-                height: 26px;
-                width: 26px;
-                left: 4px;
-                bottom: 4px;
-                background-color: white;
-                -webkit-transition: .4s;
-                transition: .4s;
-            }
-
-            input:checked + .slider {
-                background-color: #2196F3;
-            }
-
-            input:focus + .slider {
-                box-shadow: 0 0 1px #2196F3;
-            }
-
-            input:checked + .slider:before {
-                -webkit-transform: translateX(26px);
-                -ms-transform: translateX(26px);
-                transform: translateX(26px);
-            }
-
-            .slider.round {
-                border-radius: 34px;
-            }
-
-            .slider.round:before {
-                border-radius: 50%;
-            }
-
         </style>
         <?php
     }
 }
 add_action('admin_enqueue_scripts', 'wpbfd_optimize_enqueue_styles');
 
-// 图片延迟加载
-function wpbfd_optimize_add_lazy_loading($content) {
-
-    if (get_option('wpbfd_optimize_lazy_loading') === '1') {
-        $content = str_replace('<img ', '<img loading="lazy" ', $content);
-    }
-    return $content;
-}
-add_filter('the_content', 'wpbfd_optimize_add_lazy_loading');
-// 图片延迟加载结束
-
 
 // 主菜单页
 function wpdfdoptimize_main_page() {
-    // 图片延迟加载提醒
-    if (isset($_POST['toggle_lazy_loading'])) {
-        $result = update_option('wpbfd_optimize_lazy_loading', $_POST['lazy_loading']);
-        if ($result) {
-            ?>
-            <div class="notice notice-success is-dismissible">
-                <p>已保存。</p>
-            </div>
-            <?php
-        } else {
-            ?>
-            <div class="notice notice-error is-dismissible">
-                <p>没有开启成功，具体错误可以查看网站日志。</p>
-            </div>
-            <?php
-        }
-    }
-    // 图片延迟加载提醒结束
-
     ?>
     <div class="wrap">
         <h1>WPBFD设置(一款代码开源的wordpress基础优化插件)</h1>
@@ -170,22 +81,6 @@ function wpdfdoptimize_main_page() {
         4、如果插件一启用就造成网站不正常，就去服务器里面删掉这个插件文件夹，名称：WPBFDoptimizations<br>
         5、可以联系我进行反馈，根据具体错误原因，之后更新兼容，也可以自己看代码修复.<br>
         6、插件相关函数说明查看：<a href="https://www.jingxialai.com/4307.html" target="_blank">WPBFD Optimization</a>方便你自己更改增加代码 ｜ GitHub下载<a href="https://github.com/suqicloud/WPBFD-Optimization" target="_blank">WPBFD Optimization</a><br>
-
-
-
-        <!-- 图片延迟加载按钮 -->
-        <form method="post" action="">
-            <p>
-                <label>文章图片延迟加载：</label>
-                <label class="switch">
-                    <input type="checkbox" name="lazy_loading" value="1" <?php checked(get_option('wpbfd_optimize_lazy_loading'), '1'); ?>>
-                    <span class="slider round"></span>
-                </label>
-                </p>
-                <p>
-                <input type="submit" name="toggle_lazy_loading" class="button button-primary" value="保存更改">
-            </p>
-        </form>
 
 
         <!-- 清除对象缓存按钮 -->
