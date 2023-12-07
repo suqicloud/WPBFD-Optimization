@@ -135,7 +135,7 @@ function optimize_postmeta_page() {
     if ($unused_edit_fields_count > 0) {
         echo "<p>有{$unused_edit_fields_count}条孤立的关系数据</p>";
     } else {
-        echo "<p>暂时没有不用的_edit_lock、_edit_last字段</p>";
+        echo "<p>暂时没有孤立的关系数据</p>";
     }
     ?>
 
@@ -165,7 +165,7 @@ function optimize_postmeta_page() {
         <input type="submit" name="wpbfd_remove_old_aliases_submit" class="button-primary" value="点击删除">
     </p>
 </form>
-<?php perform_optimization('wpbfd_remove_old_aliases_nonce', 'wpbfd_remove_old_aliases', '删除旧的别名信息(_wp_old_slug)完成！', 'wpbfd_remove_old_aliases_submit'); ?>
+<?php perform_optimization('wpbfd_remove_old_aliases_nonce', 'wpbfd_remove_old_aliases', '删除旧的别名信息完成！', 'wpbfd_remove_old_aliases_submit'); ?>
 
 
 <!-- 删除不存在文章的评论元信息功能 -->
@@ -209,7 +209,7 @@ function optimize_postmeta_page() {
         <input type="submit" name="wpbfd_remove_pingback_trackback_submit" class="button-primary" value="点击删除">
     </p>
 </form>
-<?php perform_optimization('wpbfd_remove_pingback_trackback_nonce', 'wpbfd_remove_pingback_trackback', '删除_pingback和trackback记录完成！', 'wpbfd_remove_pingback_trackback_submit'); ?>
+<?php perform_optimization('wpbfd_remove_pingback_trackback_nonce', 'wpbfd_remove_pingback_trackback', '删除pingback和trackback记录完成！', 'wpbfd_remove_pingback_trackback_submit'); ?>
 
 
 <!-- 删除与文章无关的标签功能 -->
@@ -481,7 +481,7 @@ function optimize_postmeta_page() {
 
 
     <script>
-         
+        // Move success messages after corresponding forms
         document.addEventListener('DOMContentLoaded', function () {
             var successMessages = document.querySelectorAll('.optimize-plugin-notice');
             successMessages.forEach(function (message) {
@@ -576,7 +576,7 @@ function get_unused_edit_fields_count() {
 
 // 在删除操作前添加消息
 add_action('admin_init', function () {
-    perform_optimization('wpbfd_remove_unused_edit_fields_nonce', 'wpbfd_remove_unused_edit_fields', '删除不用的_edit_lock和_edit_last字段完成！', 'wpbfd_remove_unused_edit_fields_submit');
+    perform_optimization('wpbfd_remove_unused_edit_fields_nonce', 'wpbfd_remove_unused_edit_fields', '删除孤立的关系数据完成！', 'wpbfd_remove_unused_edit_fields_submit');
 });
 
 
@@ -605,7 +605,7 @@ function get_unused_old_aliases_count() {
 
 // 在删除操作前添加消息
 add_action('admin_init', function () {
-    perform_optimization('wpbfd_remove_old_aliases_nonce', 'wpbfd_remove_old_aliases', '删除旧的别名信息(_wp_old_slug)完成！', 'wpbfd_remove_old_aliases_submit');
+    perform_optimization('wpbfd_remove_old_aliases_nonce', 'wpbfd_remove_old_aliases', '删除旧的别名信息完成！', 'wpbfd_remove_old_aliases_submit');
 });
 
 
@@ -676,7 +676,7 @@ function get_removed_pingback_trackback_count() {
 
 // 在删除_pingback和trackback记录操作前添加消息
 add_action('admin_init', function () {
-    perform_optimization('wpbfd_remove_pingback_trackback_nonce', 'wpbfd_remove_pingback_trackback', '删除_pingback和trackback记录完成！', 'wpbfd_remove_pingback_trackback_submit');
+    perform_optimization('wpbfd_remove_pingback_trackback_nonce', 'wpbfd_remove_pingback_trackback', '删除pingback和trackback记录完成！', 'wpbfd_remove_pingback_trackback_submit');
 });
 
 
@@ -800,7 +800,7 @@ function get_wp_session_records_count() {
 
 // 在删除操作前添加消息
 add_action('admin_init', function () {
-    perform_optimization('wpbfd_remove_wp_session_records_nonce', 'wpbfd_remove_wp_session_records', '删除wp_session记录操作完成！', 'wpbfd_remove_wp_session_records_submit');
+    perform_optimization('wpbfd_remove_wp_session_records_nonce', 'wpbfd_remove_wp_session_records', '删除未使用的会话记录操作完成！', 'wpbfd_remove_wp_session_records_submit');
 });
 
 
@@ -832,7 +832,7 @@ function get_expired_transients_count() {
 
 // 在删除操作前添加消息
 add_action('admin_init', function () {
-    perform_optimization('wpbfd_remove_expired_transients_nonce', 'wpbfd_remove_expired_transients', '删除expired transients记录操作完成！', 'wpbfd_remove_expired_transients_submit');
+    perform_optimization('wpbfd_remove_expired_transients_nonce', 'wpbfd_remove_expired_transients', '删除瞬态数据操作完成！', 'wpbfd_remove_expired_transients_submit');
 });
 
 
