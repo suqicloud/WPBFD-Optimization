@@ -481,7 +481,6 @@ function optimize_postmeta_page() {
 
 
     <script>
-        // Move success messages after corresponding forms
         document.addEventListener('DOMContentLoaded', function () {
             var successMessages = document.querySelectorAll('.optimize-plugin-notice');
             successMessages.forEach(function (message) {
