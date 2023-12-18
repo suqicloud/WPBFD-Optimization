@@ -106,8 +106,8 @@ function wpdfdoptimize_main_page() {
 
         <!-- 图片广告 -->
         <div class="image-container">
-             <img src="https://ypwenjian.jingxialai.com/jingxialai/2023/11/20231124083449222.jpg" height="150" width="300" style="height: 150px; width: 300px;">
-             <img src="https://ypwenjian.jingxialai.com/jingxialai/2023/11/20231126152136145.png" height="150" width="300" style="height: 150px; width: 300px;">
+             <img src="广告图片链接" height="150" width="300" style="height: 150px; width: 300px;">
+             <img src="广告图片链接" height="150" width="300" style="height: 150px; width: 300px;">
         </div>
     </div>
     <?php
