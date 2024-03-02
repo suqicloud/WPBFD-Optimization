@@ -11,6 +11,7 @@ Wordpress cache optimization
 
 4、如果插件一启用就造成网站不正常，就去服务器里面删掉这个插件文件夹，名称：WPBFDoptimizations
 
+调用了No category base插件原版代码，如果你有No category base插件或者其他主题插件也是用的No category base代码，就无法启用。
 
 每段都有注释，可以看下。
 
