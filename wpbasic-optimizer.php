@@ -212,10 +212,10 @@ function WPBF_custom_option_setup() {
     add_settings_field('wpbf_hide-dashboard-activity-news', '39、隐藏仪表盘的活动和新闻模块', 'wpbf_hide_dashboard_activity_news_callback', 'wpbf-basic-optimizer', 'section-one');
     //移除REST API和oEmbed信息
     register_setting('WPBF-plugin-settings-group', 'wpbf_remove_rest_oembed');
-    add_settings_field('wpbf_remove-rest-oembed', '40、移除REST API和oEmbed信息', 'wpbf_remove_rest_oembed_callback', 'wpbf-basic-optimizer', 'section-one');
+    add_settings_field('wpbf_remove-rest-oembed', '40、移除REST API和oEmbed相关信息', 'wpbf_remove_rest_oembed_callback', 'wpbf-basic-optimizer', 'section-one');
     //移除杂项信息
     register_setting('WPBF-plugin-settings-group', 'wpbf_remove_miscellaneous');
-    add_settings_field('wpbf_remove-miscellaneous', '41、移除其他页面杂项信息', 'wpbf_remove_miscellaneous_callback', 'wpbf-basic-optimizer', 'section-one');
+    add_settings_field('wpbf_remove-miscellaneous', '41、移除13项其他页面信息', 'wpbf_remove_miscellaneous_callback', 'wpbf-basic-optimizer', 'section-one');
     // 禁用编辑器脚本和样式
     register_setting('WPBF-plugin-settings-group', 'wpbf_disable_block_editor_scripts');
     add_settings_field('wpbf_disable-block-editor-scripts', '42、禁用网站前台加载Gutenberg编辑器脚本和样式', 'wpbf_disable_block_editor_scripts_callback', 'wpbf-basic-optimizer', 'section-one');
@@ -857,25 +857,30 @@ function remove_default_wp_jquery() {
 add_action('init', 'wpbf_disable_frontend_jquery');
 
 //移除jquery-migrate.min.js
+// 移除jquery-migrate.min.js
 function wpbf_remove_jquery_migrate_callback() {
     $setting = esc_attr(get_option('wpbf_remove_jquery_migrate'));
     echo "<input type='checkbox' name='wpbf_remove_jquery_migrate' " . checked($setting, 'on', false) . " />";
 }
 
 function wpbf_remove_jquery_migrate() {
-    if (get_option('wpbf_remove_jquery_migrate') === 'on') {
-        add_action('wp_default_scripts', 'disable_jquery_migrate');
+    if (isset($_POST['wpbf_remove_jquery_migrate'])) {
+        update_option('wpbf_remove_jquery_migrate', $_POST['wpbf_remove_jquery_migrate']);
+    } else {
+        delete_option('wpbf_remove_jquery_migrate');
     }
 }
 
 function disable_jquery_migrate(&$scripts) {
-    if (!is_admin()) {
-        $scripts->remove('jquery');
+    $remove_jquery_migrate = get_option('wpbf_remove_jquery_migrate');
+    if ($remove_jquery_migrate === 'on' && !is_admin()) {
+                $scripts->remove('jquery');
         $scripts->add('jquery', false, array('jquery-core'), null);
     }
 }
+add_action('wp_default_scripts', 'disable_jquery_migrate');
 
-add_action('init', 'wpbf_remove_jquery_migrate');
+
 
 // 禁用文章自动保存、修订版本、id不连贯的问题
 function wpbf_disable_autosave_revisions_inconsistency_callback() {
@@ -883,20 +888,34 @@ function wpbf_disable_autosave_revisions_inconsistency_callback() {
     echo "<input type='checkbox' name='wpbf_disable_autosave_revisions_inconsistency' " . checked($setting, 'on', false) . " />";
 }
 
+function wpbf_set_next_post_id() {
+    global $wpdb;
+    $last_post_id = (int) $wpdb->get_var("SELECT MAX(ID) FROM $wpdb->posts");
+    if ($last_post_id > 0) {
+        $next_post_id = $last_post_id + 1;
+        $wpdb->query("ALTER TABLE $wpdb->posts AUTO_INCREMENT = $next_post_id");
+    }
+}
+//用这个替代$wpdb->query("ALTER TABLE $wpdb->posts AUTO_INCREMENT = 1");
+
 function wpbf_disable_autosave_revisions_inconsistency() {
     if (is_admin() && isset($_POST['post_ID'])) {
         $post_id = $_POST['post_ID'];
         
         if (get_option('wpbf_disable_autosave_revisions_inconsistency') === 'on') {
-
+            // 禁用自动保存
             wp_deregister_script('autosave');
 
-            add_filter('wp_revisions_to_keep', '__return_zero');
+            // 设置保留的修订版本数量为0
+            add_filter('wpbf_wp_revisions_to_keep', '__return_zero');
 
             // 删除自动保存和修订
             global $wpdb;
             $wpdb->query("DELETE FROM $wpdb->posts WHERE post_status = 'auto-draft' OR post_type = 'revision'");
-            $wpdb->query("ALTER TABLE $wpdb->posts AUTO_INCREMENT = 1");
+            //$wpdb->query("ALTER TABLE $wpdb->posts AUTO_INCREMENT = 1");
+
+            // 设置下一个文章的ID
+            wpbf_set_next_post_id();
         }
     }
 }
@@ -1034,21 +1053,34 @@ function wpbf_remove_miscellaneous_features() {
     $setting = get_option('wpbf_remove_miscellaneous');
 
     if ($setting === 'on') {
+        // 从头部移除 WordPress 生成器 meta 标签
         remove_action('wp_head', 'wp_generator');
+        // 从头部移除额外的 feed 链接
         remove_action('wp_head', 'feed_links_extra', 3);
         remove_action('wp_head', 'feed_links', 2);
+        // 从头部移除 REST API 链接
         remove_action('template_redirect', 'rest_output_link_header', 11);
         remove_action('template_redirect', 'wp_shortlink_header', 11, 0);
+        // 从头部移除 shortlink
         remove_action('wp_head', 'wp_shortlink_wp_head', 10, 0);
+        // 从头部移除 Really Simple Discovery (RSD) 链接
         remove_action('wp_head', 'rsd_link');
+        // 从头部移除资源提示
         remove_action('wp_head', 'wp_resource_hints', 2);
+        // 从头部移除 Windows Live Writer manifest 链接
         remove_action('wp_head', 'wlwmanifest_link');
+        // 从头部移除索引链接
         remove_action('wp_head', 'index_rel_link');
+        // 从头部移除父级文章关联链接
         remove_action('wp_head', 'parent_post_rel_link', 10, 0);
+        // 从头部移除起始文章关联链接
         remove_action('wp_head', 'start_post_rel_link', 10, 0);
+        // 从头部移除相邻文章关联链接
         remove_action('wp_head', 'adjacent_posts_rel_link_wp_head');
         remove_action('wp_head', 'adjacent_posts_rel_link', 10, 0);
+        // 移除 pingback 功能
         remove_action('do_pings', 'do_all_pings');
+        // 移除文章发布钩子
         remove_action('publish_post', '_publish_post_hook');
     }
 }
@@ -1121,7 +1153,7 @@ function wpbf_compress_page_callback() {
     echo "<input type='checkbox' name='wpbf_compress_page' " . checked($setting, 'on', false) . " />";
 }
 
-
+/*
 function wpbf_compress_page_features() {
     $setting = get_option('wpbf_compress_page');
 
@@ -1170,7 +1202,67 @@ function wpbf_compress_page_features() {
 }
 
 add_action('after_setup_theme', 'wpbf_compress_page_features');
+*/
+function wpbf_compress_page_features() {
+    $setting = get_option('wpbf_compress_page');
 
+    if ($setting === 'on' && !is_admin()) {
+        function compress_page_content($buffer) {
+            if (is_singular('post') || is_page()) {
+                // 禁止pre标签压缩
+                if (preg_match_all('/<\/pre>/i', $buffer, $matches)) {
+                    $buffer = '<!--compress-start--><!--compress-no-start-->' . $buffer;
+                    $buffer .= '<!--compress-no-end--><!--compress-end-->';
+                }
+
+                $initial = strlen($buffer);
+
+                // 检查是否为0
+                if ($initial === 0) {
+                    return $buffer;
+                }
+
+                $buffer = explode("<!--compress-start-->", $buffer);
+                $count = count($buffer);
+                $out = "";
+
+                for ($i = 0; $i < $count; $i++) {
+                    if (stristr($buffer[$i], '<!--compress-no-start-->')) {
+                        $buffer[$i] = (str_replace("<!--compress-no-start-->", " ", $buffer[$i]));
+                    } else {
+                        $buffer[$i] = (str_replace("\t", " ", $buffer[$i]));
+                        $buffer[$i] = (str_replace("\n\n", "\n", $buffer[$i]));
+                        $buffer[$i] = (str_replace("\n", "", $buffer[$i]));
+                        $buffer[$i] = (str_replace("\r", "", $buffer[$i]));
+                        while (stristr($buffer[$i], '  ')) {
+                            $buffer[$i] = (str_replace("  ", " ", $buffer[$i]));
+                        }
+                    }
+                    $out .= $buffer[$i];
+                }
+
+                $final = strlen($out);
+
+                // 检查是否为0
+                if ($initial === 0) {
+                    return $buffer;
+                }
+
+                $savings = ($initial - $final) / $initial * 100;
+                $savings = round($savings, 2);
+                $info = "<!--压缩前:{$initial}bytes;压缩后:{$final}bytes;节约:{$savings}%-->";
+                return $out . $info;
+
+            } else {
+                return $buffer; // 在其他页面直接返回原始内容
+            }
+        }
+
+        ob_start('compress_page_content');
+    }
+}
+
+add_action('after_setup_theme', 'wpbf_compress_page_features');
 
 
 // 禁止内容转义 wptexturize
