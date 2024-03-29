@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function () {
         event.preventDefault();
 
         try {
-            const response = await fetch('https://www.jingxialai.com/pulginapi/WPBFD-version-check.php');
+            const response = await fetch('https://www.yourweb.com/pulginapi/WPBFD-version-check.php');
 
             if (!response.ok) {
                 throw new Error('网络响应不正常');
