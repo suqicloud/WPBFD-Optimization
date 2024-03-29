@@ -3,7 +3,7 @@
 Plugin Name: WPBFD Optimization
 Plugin URI: https://www.jingxialai.com/4307.html
 Description: 一个Wordpress基础功能和数据库简单优化插件。
-Version: 1.3
+Version: 1.5
 Author: Summer
 License: GPL License
 */
@@ -12,6 +12,7 @@ License: GPL License
 add_action('admin_menu', 'wpbfd_optimize_menu');
 include_once(plugin_dir_path(__FILE__) . 'wpbasic-optimizer.php');
 include_once(plugin_dir_path(__FILE__) . 'wpdatabase-optimize.php');
+include_once(plugin_dir_path(__FILE__) . 'wpbfd-surety.php');
 
 // 设置链接回调函数
 function wpbfd_optimize_settings_link($links) {
@@ -125,7 +126,7 @@ function wpbfd_optimize_enqueue_styles() {
 }
 add_action('admin_enqueue_scripts', 'wpbfd_optimize_enqueue_styles');
 
-// 检查category分类链接设置
+// 检查category分类链接设置开始
 add_action('init', 'check_no_category_base_setting');
 
 function check_no_category_base_setting() {
@@ -133,21 +134,20 @@ function check_no_category_base_setting() {
         no_category_base_permastruct();
     }
 }
+// 检查category分类链接设置结束
 
-// 图片延迟加载
+// 图片延迟加载开始
 function wpbfd_optimize_add_lazy_loading($content) {
-    // 图片延迟加载
     if (get_option('wpbfd_optimize_lazy_loading') === '1') {
         $content = str_replace('<img ', '<img loading="lazy" ', $content);
     }
     return $content;
 }
 add_filter('the_content', 'wpbfd_optimize_add_lazy_loading');
+// 图片延迟加载结束
 
-
-// 添加图片alt
+// 添加图片alt开始
 function wpbfd_optimize_add_image_alt($content) {
-    // 添加图片 alt 和 title
     if (get_option('wpbfd_optimize_add_image_alt') === '1') {
         global $post;
         preg_match_all('/<img (.*?)\/>/', $content, $images);
@@ -172,44 +172,155 @@ function wpbfd_optimize_add_image_alt($content) {
     return $content;
 }
 add_filter('the_content', 'wpbfd_optimize_add_image_alt');
+// 添加图片alt结束
 
-
-// 隐藏文章图片
+// 隐藏文章图片开始
 function wpbfd_optimize_hide_cover_image($content) {
-    // 隐藏文章图片
     if (get_option('wpbfd_optimize_hide_cover_image') === '1' && !is_user_logged_in()) {
         $content = preg_replace('/<img(.*?)class=[\'"](.*?wp-image-\d+)[\'"](.*?)>/i', '', $content);
     }
     return $content;
 }
 add_filter('the_content', 'wpbfd_optimize_hide_cover_image');
+// 隐藏文章图片结束
 
+// 添加用户IP自定义列开始
+function wpbfd_add_user_ip_column($columns) {
+    if (get_option('wpbfd_optimize_get_user_ip') === '1') {
+        $columns['user_ip'] = '用户IP';
+    }
+    return $columns;
+}
+add_filter('manage_users_columns', 'wpbfd_add_user_ip_column');
 
+// 显示用户IP地址的值
+function wpbfd_display_user_ip($value, $column_name, $user_id) {
+    if (get_option('wpbfd_optimize_get_user_ip') === '1' && $column_name === 'user_ip') {
+        $registration_ip = get_user_meta($user_id, 'registration_ip', true);
+        $last_login_ip = get_user_meta($user_id, 'last_login_ip', true);
+        $user_ip = '';
+        if ($registration_ip) {
+            $user_ip .= '注册IP: ' . $registration_ip . '<br>';
+        } else {
+            $user_ip .= '注册IP: 未知<br>';
+        }
+        if ($last_login_ip) {
+            $user_ip .= '最后登录IP: ' . $last_login_ip;
+        } else {
+            $user_ip .= '最后登录IP: 未知';
+        }
+        return $user_ip;
+    }
+    return $value;
+}
+add_filter('manage_users_custom_column', 'wpbfd_display_user_ip', 10, 3);
 
+// 在用户注册时记录注册IP
+function wpbfd_record_user_registration_ip($user_id) {
+    $ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
+    add_user_meta($user_id, 'registration_ip', $ip_address, true);
+}
+add_action('user_register', 'wpbfd_record_user_registration_ip');
+
+// 在用户登录时记录最后登录IP和时间
+function wpbfd_record_user_last_login_ip($user_login, $user) {
+    $user_id = $user->ID;
+    $ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
+    
+    // 更新最后登录IP
+    update_user_meta($user_id, 'last_login_ip', $ip_address);
+
+    // 更新最后登录时间
+    update_user_meta($user_id, 'last_login_time', current_time('mysql'));
+}
+add_action('wp_login', 'wpbfd_record_user_last_login_ip', 10, 2);
+
+// 添加用户IP自定义列结束
+
+// 添加用户时间自定义列开始
+function wpbfd_add_user_time_column($columns) {
+    if (get_option('wpbfd_optimize_show_user_time') === '1') {
+        $columns['user_time'] = '用户时间';
+    }
+    return $columns;
+}
+add_filter('manage_users_columns', 'wpbfd_add_user_time_column');
+
+// 显示用户注册时间和最后登录时间的值
+function wpbfd_display_user_time($value, $column_name, $user_id) {
+    if (get_option('wpbfd_optimize_show_user_time') === '1' && $column_name === 'user_time') {
+        $user_registered = get_userdata($user_id)->user_registered;
+        $last_login = get_user_meta($user_id, 'last_login_time', true); 
+        $user_time = '';
+        if ($user_registered) {
+            $user_time .= '注册时间: ' . date('Y-m-d H:i:s', strtotime($user_registered)) . '<br>';
+        } else {
+            $user_time .= '注册时间: 未知<br>';
+        }
+        if ($last_login) {
+            $user_time .= '最后登录时间: ' . date('Y-m-d H:i:s', strtotime($last_login));
+        } else {
+            $user_time .= '最后登录时间: 未知';
+        }
+        return $user_time;
+    }
+    return $value;
+}
+add_filter('manage_users_custom_column', 'wpbfd_display_user_time', 10, 3);
+// 添加用户时间自定义列结束
 
 // 消息提醒
 function wpbfd_optimize_add_lazy_loading_and_category_settings() {
     if (isset($_POST['toggle_settings'])) {
-        // 保存图片延迟加载设置
-        //$lazy_loading = isset($_POST['lazy_loading']) ? $_POST['lazy_loading'] : '0';
-        // $result_lazy_loading = update_option('wpbfd_optimize_lazy_loading', $_POST['lazy_loading']);
+        $settings_updated = false; // 标记是否有设置更新
 
+        // 保存图片延迟加载设置
         $lazy_loading_value = isset($_POST['lazy_loading']) ? $_POST['lazy_loading'] : '0';
         $result_lazy_loading = update_option('wpbfd_optimize_lazy_loading', $lazy_loading_value);
+        if ($result_lazy_loading) {
+            $settings_updated = true;
+        }
 
         // 保存隐藏文章图片开关设置
         $hide_cover_image_value = isset($_POST['hide_cover_image']) ? $_POST['hide_cover_image'] : '0';
         $result_hide_cover_image = update_option('wpbfd_optimize_hide_cover_image', $hide_cover_image_value);
+        if ($result_hide_cover_image) {
+            $settings_updated = true;
+        }
 
         // 保存添加图片alt设置
         $add_image_alt_value = isset($_POST['add_image_alt']) ? $_POST['add_image_alt'] : '0';
         $result_add_image_alt = update_option('wpbfd_optimize_add_image_alt', $add_image_alt_value);
-
+        if ($result_add_image_alt) {
+            $settings_updated = true;
+        }
 
         // 保存category按钮设置
-        $result_category = update_option('no_category_base_enabled', $_POST['no_category_base_enabled']);
+        $result_category = update_option('no_category_base_enabled', isset($_POST['no_category_base_enabled']) ? $_POST['no_category_base_enabled'] : 'off');
+        if ($result_category) {
+            $settings_updated = true;
+        }
 
-        if ($result_lazy_loading || $result_category || $result_hide_cover_image || $result_add_image_alt) {
+        // 保存用户时间设置
+        $show_user_time_value = isset($_POST['show_user_time']) ? $_POST['show_user_time'] : '0';
+        $result_show_user_time = update_option('wpbfd_optimize_show_user_time', $show_user_time_value);
+        if ($result_show_user_time) {
+            $settings_updated = true;
+        }
+
+        // 保存用户IP设置
+        $user_ip_value = isset($_POST['user_ip']) ? $_POST['user_ip'] : '0';
+        $result_user_ip = update_option('wpbfd_optimize_get_user_ip', $user_ip_value);
+        if ($result_user_ip) {
+            $settings_updated = true;
+            // 添加用户IP字段到用户meta表
+            if ($user_ip_value === '1') {
+                add_user_meta_field('registration_ip');
+                add_user_meta_field('last_login_ip');
+            }
+        }
+
+        if ($settings_updated) {
             ?>
             <div class="notice notice-success is-dismissible">
                 <p>已保存。</p>
@@ -225,16 +336,41 @@ function wpbfd_optimize_add_lazy_loading_and_category_settings() {
     }
 }
 
+
+// 添加用户meta字段 用于ip
+function add_user_meta_field($field_name) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'usermeta';
+    $user_id = get_current_user_id(); 
+
+    $wpdb->insert(
+        $table_name,
+        array(
+            'user_id' => $user_id,
+            'meta_key' => $field_name,
+            'meta_value' => ''
+        ),
+        array(
+            '%d',
+            '%s',
+            '%s'
+        )
+    );
+}
+
+
 // 主页设置
 function wpdfdoptimize_main_page() {
     wpbfd_optimize_add_lazy_loading_and_category_settings();
 
     // 获取开关设置
-    $enabled_lazy_loading = get_option('wpbfd_optimize_lazy_loading', '0');
-    $enabled_hide_cover_image = get_option('wpbfd_optimize_hide_cover_image', '0');
-    $enabled_add_image_alt = get_option('wpbfd_optimize_add_image_alt', '0');
-    $enabled_category = get_option('no_category_base_enabled', 'off');
-    
+    $enabled_lazy_loading = get_option('wpbfd_optimize_lazy_loading', '0'); // 获取图片延迟加载
+    $enabled_hide_cover_image = get_option('wpbfd_optimize_hide_cover_image', '0');  // 获取文中图片
+    $enabled_add_image_alt = get_option('wpbfd_optimize_add_image_alt', '0'); // 获取图片标题属性设置
+    $enabled_category = get_option('no_category_base_enabled', 'off'); // 获取分类链接设置
+    $enabled_user_ip = get_option('wpbfd_optimize_get_user_ip', '0'); // 获取用户ip设置
+    $enabled_user_time = get_option('wpbfd_optimize_show_user_time', '0'); // 获取用户时间设置
+
     ?>
     <div class="wrap">
         <h1>WPBFD设置(一款代码开源的wordpress基础优化插件)</h1>
@@ -255,7 +391,7 @@ function wpdfdoptimize_main_page() {
             </p>
 
             <p>
-                <label>隐藏文章图片(登录可见)：</label>
+                <label>隐藏全站文章中的图片(登录可见)：</label>
                 <label class="switch">
                     <input type="checkbox" name="hide_cover_image" value="1" <?php checked($enabled_hide_cover_image, '1'); ?>>
                     <span class="slider round"></span>
@@ -263,7 +399,7 @@ function wpdfdoptimize_main_page() {
             </p>
 
             <p>
-                <label>添加图片alt和title：</label>
+                <label>为文章中的图片添加alt和title属性：</label>
                 <label class="switch">
                     <input type="checkbox" name="add_image_alt" value="1" <?php checked($enabled_add_image_alt, '1'); ?>>
                     <span class="slider round"></span>
@@ -271,12 +407,29 @@ function wpdfdoptimize_main_page() {
             </p>
             
             <p>
-                <label>删掉分类category链接：</label>
+                <label>删掉分类中间的category链接：</label>
                 <label class="switch">
                     <input type="checkbox" name="no_category_base_enabled" value="on" <?php checked($enabled_category, 'on'); ?>>
                     <span class="slider round"></span>
                 </label>
             </p>
+
+            <p>
+                <label>显示用户IP(仅限启用之后的用户)：</label>
+                <label class="switch">
+                    <input type="checkbox" name="user_ip" value="1" <?php checked($enabled_user_ip, '1'); ?>>
+                    <span class="slider round"></span>
+                </label>
+            </p>
+
+            <p>
+                <label>显示用户时间(注册和登录)：</label>
+                <label class="switch">
+                    <input type="checkbox" name="show_user_time" value="1" <?php checked($enabled_user_time, '1'); ?>>
+                    <span class="slider round"></span>
+                </label>
+            </p>
+
             <p>
                 <input type="submit" name="toggle_settings" class="button-primary" value="保存更改">
             </p>
@@ -288,9 +441,8 @@ function wpdfdoptimize_main_page() {
             <p>
                 <input type="submit" name="clear_object_cache" class="button-primary" value="清除对象缓存">
             </p>
-            1、删掉category的代码来自No category base插件，用这里就不要安装插件了，保存之后重新保存下固定链接<br>
-            2、如果你网站有开启Redis、Memcached对象缓存，基础功能优化之后之后就清除下对象缓存，如果没有就不要点<br>
-            3、文章图片延迟加载大部分主题都有这个功能，所以这里的文章图片延迟加载功能只支持新标准浏览器
+            特别说明、删掉category的代码全部来自No category base插件，用这里就不要安装插件了，保存之后重新保存下固定链接<br>
+            <p>插件QQ群：<a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=dgfThTp7nW4_hoRc1wjaGWEKlNmemlqB&jump_from=webapi&authKey=kwUfvush+fV1G/4Mvr5cva6EnWnQPave2J61QzmfTmUEk+OdGg6c9H1tPaHQYjLJ"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="Wordpress运营技术瞎折腾" title="Wordpress运营技术瞎折腾"></a></p>
         </form>
         
         <?php
@@ -306,15 +458,15 @@ function wpdfdoptimize_main_page() {
         ?>
         <!-- 清除对象缓存按钮结束 -->
         <!-- 基础信息 -->
-        <p>插件QQ群：<a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=dgfThTp7nW4_hoRc1wjaGWEKlNmemlqB&jump_from=webapi&authKey=kwUfvush+fV1G/4Mvr5cva6EnWnQPave2J61QzmfTmUEk+OdGg6c9H1tPaHQYjLJ"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="Wordpress运营技术瞎折腾" title="Wordpress运营技术瞎折腾"></a></p>
-
-        <p>WPBFD Optimization 基础功能数据库优化说明：</p>
-        1、插件可能不兼容你的网站(和主题或者其他插件冲突)，如果你在主题functions.php里面加过相关功能代码，先去删掉<br>
-        2、先禁用其他优化插件(比如Autoptimize、WP Super Cache等)，测试正常之后，再去启用这些插件；如果你网站开启了CDN，去刷新下CDN再看<br>
-        <font style="color: #FF3300;">3、优化数据库之前，一定要先备份数据库！先备份数据库！先备份数据库！</font><br>
-        4、如果插件一启用就造成网站不正常，就去服务器里面删掉这个插件文件夹，名称：WPBFDoptimizations<br>
-        5、可以联系我进行反馈，根据具体错误原因，之后更新兼容，也可以自己看代码修复.<br>
-        6、插件相关函数说明查看：<a href="https://www.jingxialai.com/4307.html" target="_blank">WPBFD Optimization</a>方便你自己更改增加代码 ｜ GitHub下载：<a href="https://www.jingxialai.com/4307.html" target="_blank">WPBFD Optimization</a><br>
+        <p>WPBFD Optimization 基础说明：</p>
+        1、插件可能不兼容你的网站(和主题或其他插件冲突)，如果你在主题functions.php里面加过相关功能代码，先去删掉<br>
+        2、现在很多主题也自带很多优化功能了，对比下主题的功能，尽量不要重复了<br>
+        3、先禁用其他优化插件(比如Autoptimize、WP Super Cache等)，测试正常之后，再去启用这些插件；如果你网站开启了CDN，去刷新下CDN再看<br>
+        <font style="color: #FF3300;">4、优化数据库之前，一定要先备份数据库！先备份数据库！先备份数据库！</font><br>
+        5、如果你网站有开启Redis、Memcached对象缓存，基础功能优化之后就清除下对象缓存，如果没有就不用点<br>
+        6、如果插件一启用就造成网站不正常，代码冲突引起的，就去服务器里面删掉这个插件文件夹，名称：WPBFDoptimizations<br>
+        7、可以联系我进行反馈，根据具体错误原因，之后更新兼容，也可以自己看代码修复.<br>
+        8、插件相关函数说明查看：<a href="https://www.jingxialai.com/4307.html" target="_blank">WPBFD Optimization</a>方便你自己更改增加代码 ｜ GitHub下载：<a href="https://www.jingxialai.com/4307.html" target="_blank">WPBFD Optimization</a><br>
 
     </div>
 <!-- 基础信息结束 -->
@@ -494,24 +646,49 @@ add_submenu_page(
     'wpbfd-database',
     'optimize_postmeta_page'
 );
+    
+add_submenu_page(
+    'wpdfdoptimize', 
+    'WPBFD基础安全优化',
+    '基础安全优化',
+    'manage_options',
+    'wpbfd-surety',
+    'wpbfd_surety_settings_page'
+);  
+    
 }
 
 /* 停用插件之后删掉数据库里面的设置值
-register_deactivation_hook(__FILE__, 'my_plugin_deactivate');
+register_uninstall_hook(__FILE__, 'wpbfd_optimize_uninstall');
 
-function my_plugin_deactivate() {
+function wpbfd_optimize_uninstall() {
+    // 删除插件在数据库中存储的数据
     delete_option('wpbfd_optimize_lazy_loading');
+    delete_option('wpbfd_optimize_hide_cover_image');
+    delete_option('wpbfd_optimize_add_image_alt');
     delete_option('no_category_base_enabled');
-    // 在这里添加想要删除的其他选项
+    delete_option('wpbfd_optimize_get_user_ip');
+    delete_option('wpbfd_optimize_show_user_time');
+    
+    // 删除用户meta字段
+    remove_user_meta_field('registration_ip');
+    remove_user_meta_field('last_login_ip');
+    remove_user_meta_field('last_login_time');
+}
+
+function remove_user_meta_field($field_name) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'usermeta';
+    $user_id = get_current_user_id(); 
+
+    $wpdb->delete(
+        $table_name,
+        array(
+            'meta_key' => $field_name
+        ),
+        array(
+            '%s'
+        )
+    );
 }
 */
-
-/*<!-- 验证图片延迟加载有没有生效 -->
-        <?php
-        if (get_option('wpbfd_optimize_lazy_loading') === '1') {
-            echo 'wpbfd_optimize_lazy_loading的值为1';
-        } else {
-            echo 'wpbfd_optimize_lazy_loading的值不为1';
-        }
-        ?>
-<!-- 验证图片延迟加载有没有生效 -->*/
