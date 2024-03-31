@@ -3,7 +3,7 @@
 Plugin Name: WPBFD Optimization
 Plugin URI: https://www.jingxialai.com/4307.html
 Description: 一个Wordpress基础功能和数据库简单优化插件。
-Version: 1.5
+Version: 1.6
 Author: Summer
 License: GPL License
 */
