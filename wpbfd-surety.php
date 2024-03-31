@@ -39,10 +39,10 @@ function wpbfd_surety_settings_page() {
                 border-bottom: 1px solid #ddd;
             }
             .wpbfd-surety-redirect-url-input {
-                width: 350px; /* 设置url输入框宽度为350px */
+                width: 350px;
             }
             .wpbfd-surety-devices-url-input {
-                width: 350px; /* 设置url输入框宽度为350px */
+                width: 350px;
             }
             h2 {
                 font-size: 1.5em;
@@ -198,7 +198,7 @@ function wpbfd_surety_parameter2_callback() {
     echo '<input type="text" name="wpbfd_surety_parameter2" value="' . esc_attr($parameter2) . '" />';
 }
 
-// 新增复选框功能
+// 允许错误复选框功能
 function wpbfd_surety_allow_error_login_callback() {
     $allow_error_login = get_option('wpbfd_surety_allow_error_login');
     ?>
@@ -207,7 +207,7 @@ function wpbfd_surety_allow_error_login_callback() {
     <?php
 }
 
-// 新增按钮功能
+// 恢复按钮功能
 add_action('admin_init', 'reset_default_login');
 function reset_default_login() {
     if (isset($_POST['reset_default_login']) && $_POST['reset_default_login'] === 'true') {
@@ -229,6 +229,11 @@ function custom_login_redirect() {
     $parameter2 = get_option('wpbfd_surety_parameter2');
     $allow_error_login = get_option('wpbfd_surety_allow_error_login');
 
+    // 如果参数都未设置或未选中“允许错误登录”，则不进行任何重定向
+    if (empty($parameter1) || empty($parameter2) || $allow_error_login !== 'on') {
+        return;
+    }
+    
     // 如果未勾选“允许错误登录”，直接验证参数并重定向
     if ($allow_error_login !== 'on') {
         if (empty($_GET[$parameter1]) || $_GET[$parameter1] !== $parameter2) {
@@ -499,18 +504,24 @@ function wpbfd_update_logged_in_devices_count($user_login, $user) {
 // 检查登录设备数量并进行跳转
 add_action('wp_login', 'wpbfd_check_logged_in_devices_count', 10, 2);
 function wpbfd_check_logged_in_devices_count($user_login, $user) {
-    $max_devices_allowed = get_option('wpbfd_surety_max_devices_count', 2); // 获取设置的最大登录设备数量
-    $redirect_url = get_option('wpbfd_surety_max_devices_redirect_url', home_url()); // 获取设置的跳转URL
+    $max_devices_allowed = get_option('wpbfd_surety_max_devices_count', ''); // 获取设置的最大登录设备数量
+    $redirect_url = get_option('wpbfd_surety_max_devices_redirect_url', ''); // 获取设置的跳转URL
+
+    // 如果最大登录设备数量或跳转URL为空，则不执行任何判断
+    if ($max_devices_allowed === '' || $redirect_url === '') {
+        return;
+    }
 
     $logged_in_devices = get_user_meta($user->ID, 'wpbfd_logged_in_devices', true);
 
     // 如果设备数量超过允许的最大数量，则进行跳转
-    if (count($logged_in_devices) > $max_devices_allowed) {
+    if (count($logged_in_devices) > intval($max_devices_allowed)) {
         wp_logout(); // 注销当前用户
         wp_redirect($redirect_url); // 跳转到指定页面
         exit;
     }
 }
+
 // 用户最大登录设备限制设置结束
 
 /*// 插件主文件中添加插件卸载钩子
