@@ -1,7 +1,14 @@
 <?php
 // 二级页面，基础安全页面wpbfd-surety
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 function wpbfd_surety_settings_page() {
+    if (!current_user_can('manage_options')) {
+        wp_die('您无权限访问这个页面');
+    }
+
     global $pagenow;
     if ($pagenow === 'admin.php' && isset($_GET['page']) && $_GET['page'] === 'wpbfd-surety')  {
     //仅在这个页面生效的css
@@ -148,21 +155,30 @@ function wpbfd_surety_settings_page() {
         <?php wpbfd_surety_display_blocked_ips(); ?>
     </div>
 
-<div class="wrap">
-    <form method="post" action="options.php" class="wpbfd-surety-form-table">
-        <?php settings_fields('wpbfd_surety_blocked_query_params_group'); ?>
-        <?php do_settings_sections('wpbfd-surety-blocked-query-params-settings'); ?>
-        <?php submit_button(); ?>
-    </form>
-</div>
+    <div class="wrap">
+        <form method="post" action="options.php" class="wpbfd-surety-form-table">
+            <?php settings_fields('wpbfd_surety_blocked_query_params_group'); ?>
+            <?php do_settings_sections('wpbfd-surety-blocked-query-params-settings'); ?>
+            <?php submit_button(); ?>
+        </form>
+    </div>
 
-            <div class="wrap">
-                <form method="post" action="options.php" class="wpbfd-surety-form-table">
-                    <?php settings_fields('wpbfd_surety_max_devices_group'); ?>
-                    <?php do_settings_sections('wpbfd-surety-max-devices-settings'); ?>
-                    <?php submit_button(); ?>
-                </form>
-            </div>
+    <div class="wrap">
+        <form method="post" action="options.php" class="wpbfd-surety-form-table">
+            <?php settings_fields('wpbfd_surety_max_devices_group'); ?>
+            <?php do_settings_sections('wpbfd-surety-max-devices-settings'); ?>
+            <?php submit_button(); ?>
+        </form>
+    </div>
+
+    <div class="wrap">
+        <form method="post" action="options.php" class="wpbfd-surety-form-table">
+            <?php settings_fields('wpbfd_surety_disable_password_reset_group'); ?>
+            <?php do_settings_sections('wpbfd-surety-disable-password-reset-settings'); ?>
+            <?php submit_button(); ?>
+        </form>
+    </div>
+    
     <?php
 }
 }
@@ -229,8 +245,8 @@ function custom_login_redirect() {
     $parameter2 = get_option('wpbfd_surety_parameter2');
     $allow_error_login = get_option('wpbfd_surety_allow_error_login');
 
-    // 如果参数都未设置或未选中“允许错误登录”，则不进行任何重定向
-    if (empty($parameter1) || empty($parameter2) || $allow_error_login !== 'on') {
+    // 如果参数都未设置，则不进行任何重定向
+    if (empty($parameter1) || empty($parameter2)) {
         return;
     }
     
@@ -523,6 +539,46 @@ function wpbfd_check_logged_in_devices_count($user_login, $user) {
 }
 
 // 用户最大登录设备限制设置结束
+
+
+// 关闭找回密码
+add_action('admin_init', 'wpbfd_surety_settings_disable_password_reset_init');
+function wpbfd_surety_settings_disable_password_reset_init() {
+    register_setting('wpbfd_surety_disable_password_reset_group', 'wpbfd_surety_disable_password_reset');
+
+    add_settings_section('wpbfd_surety_disable_password_reset_section', '关闭找回密码功能', 'wpbfd_surety_disable_password_reset_section_callback', 'wpbfd-surety-disable-password-reset-settings');
+
+    add_settings_field('wpbfd_surety_disable_password_reset_field', '关闭找回密码', 'wpbfd_surety_disable_password_reset_field_callback', 'wpbfd-surety-disable-password-reset-settings', 'wpbfd_surety_disable_password_reset_section');
+}
+
+function wpbfd_surety_disable_password_reset_section_callback() {
+    echo '勾选后关闭找回密码功能，并隐藏找回密码入口，关闭之后会提示“不能重设该用户的密码”。';
+}
+
+function wpbfd_surety_disable_password_reset_field_callback() {
+    $disable_password_reset = get_option('wpbfd_surety_disable_password_reset', '');
+    echo '<input type="checkbox" name="wpbfd_surety_disable_password_reset" value="1" ' . checked($disable_password_reset, '1', false) . ' />';
+}
+
+// 检查是否关闭找回密码功能
+add_action('login_init', 'wpbfd_surety_disable_password_reset');
+function wpbfd_surety_disable_password_reset() {
+    $disable_password_reset = get_option('wpbfd_surety_disable_password_reset', '');
+
+    if ($disable_password_reset === '1') {
+        add_filter('allow_password_reset', '__return_false');
+        add_action('login_footer', 'wpbfd_surety_hide_password_reset_link');
+    }
+}
+
+// 隐藏找回密码入口
+function wpbfd_surety_hide_password_reset_link() {
+    echo '<style>#nav a[href*="wp-login.php?action=lostpassword"] {
+    display: none;
+}
+</style>';
+}
+// 关闭找回密码结束
 
 /*// 插件主文件中添加插件卸载钩子
 register_uninstall_hook(__FILE__, 'wpbfd_surety_plugin_uninstall');
