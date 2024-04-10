@@ -2,14 +2,16 @@
 //设置里面加入口
 //by summer
 //https://www.jingxialai.com/4307.html
-//add_action('admin_menu', 'WPBF_custom_option');
-//add_action('admin_init', 'WPBF_custom_option_setup');
-//function WPBF_custom_option() {
-  //  add_options_page('WPBF Optimization基础优化', '基础优化选项', 'manage_options', 'wpbf-basic-optimizer', 'WPBF_plugin_options');
-//}
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 //设置页面
 function custom_admin_styles() {
+    if (!current_user_can('manage_options')) {
+        wp_die('您无权限访问这个页面');
+    }
+
     global $pagenow;
     if ($pagenow === 'admin.php' && isset($_GET['page']) && $_GET['page'] === 'wpbf-basic-optimizer') {
         ?>
@@ -194,7 +196,7 @@ function WPBF_custom_option_setup() {
     add_settings_field('wpbf_remove-jquery-migrate', '33、移除jquery-migrate.min.js(兼容老jquery)(<span style="color:blue;">如果你确定你的主题或其他插件不依赖它</span>)', 'wpbf_remove_jquery_migrate_callback', 'wpbf-basic-optimizer', 'section-one'); 
     // 禁用文章自动保存、修订版本、id不连贯的问题
     register_setting('WPBF-plugin-settings-group', 'wpbf_disable_autosave_revisions_inconsistency'); 
-    add_settings_field('wpbf_disable-autosave-revisions-inconsistency', '34、禁用文章自动保存、修订版本、id不连贯(<span style="color:blue;">开启后不能发布文章就取消，可能是不兼容</span>)', 'wpbf_disable_autosave_revisions_inconsistency_callback', 'wpbf-basic-optimizer', 'section-one'); 
+    add_settings_field('wpbf_disable-autosave-revisions-inconsistency', '34、禁用文章自动保存(<span style="color:blue;">媒体、页面等依旧会占用id,开启后不能发布文章就取消，可能是不兼容，</span>)', 'wpbf_disable_autosave_revisions_inconsistency_callback', 'wpbf-basic-optimizer', 'section-one'); 
     //隐藏仪表盘的概况
     register_setting('WPBF-plugin-settings-group', 'wpbf_hide_dashboard_overview');
     add_settings_field('wpbf_hide-dashboard-overview', '35、隐藏仪表盘的概况模块', 'wpbf_hide_dashboard_overview_callback', 'wpbf-basic-optimizer', 'section-one');
@@ -686,7 +688,7 @@ function wpbf_remove_query_strings_callback() {
 
 
 function wpbf_remove_query_strings() {
-    if (get_option('wpbf_remove_query_strings') === 'on') {
+    if (!is_admin() && get_option('wpbf_remove_query_strings') === 'on') {
         add_filter('script_loader_src', 'remove_query_strings_from_url', 15, 1);
         add_filter('style_loader_src', 'remove_query_strings_from_url', 15, 1);
     }
