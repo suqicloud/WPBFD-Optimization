@@ -1,12 +1,17 @@
 <?php
 /*
-Plugin Name: WPBFD Optimization
+Plugin Name: WPBFD基础优化
 Plugin URI: https://www.jingxialai.com/4307.html
-Description: 一个Wordpress基础功能和数据库简单优化插件。
-Version: 1.6
+Description: 一个Wordpress基础功能、数据库简单优化以及基础安全加固插件。
+Version: 2.0
 Author: Summer
 License: GPL License
+Author URI: https://www.jingxialai.com/
 */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 // 主菜单
 add_action('admin_menu', 'wpbfd_optimize_menu');
@@ -24,6 +29,47 @@ function wpbfd_optimize_settings_link($links) {
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'wpbfd_optimize_settings_link');
 
 
+// 菜单入口设置
+function wpbfd_optimize_menu() {
+    // 添加主菜单页
+add_menu_page(
+    'WPBFD Optimization设置说明',// 页面标题
+    'WPBFD设置',// 菜单标题
+    'manage_options',// 权限要求
+    'wpdfdoptimize',// 菜单Slug
+    'wpdfdoptimize_main_page',// 页面回调函数
+    'dashicons-superhero'// 图标
+    );
+    
+    // 添加子菜单
+add_submenu_page(
+    'wpdfdoptimize', // 父菜单Slug
+    'WPBFD基础功能优化', // 子菜单标题
+    '基础功能优化',// 子菜单标题
+    'manage_options',// 权限要求
+    'wpbf-basic-optimizer',// 子菜单Slug
+    'WPBF_plugin_options'// 页面回调函数
+);
+
+add_submenu_page(
+    'wpdfdoptimize', 
+    'WPBFD数据库优化',
+    '数据库优化',
+    'manage_options',
+    'wpbfd-database',
+    'optimize_postmeta_page'
+);
+    
+add_submenu_page(
+    'wpdfdoptimize', 
+    'WPBFD基础安全优化',
+    '基础安全优化',
+    'manage_options',
+    'wpbfd-surety',
+    'wpbfd_surety_settings_page'
+);  
+    
+}
 
 // css代码
 function wpbfd_optimize_enqueue_styles() {
@@ -226,9 +272,13 @@ add_action('user_register', 'wpbfd_record_user_registration_ip');
 function wpbfd_record_user_last_login_ip($user_login, $user) {
     $user_id = $user->ID;
     $ip_address = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
-    
+    $user_agent = $_SERVER['HTTP_USER_AGENT']; //获取设备信息
+
     // 更新最后登录IP
     update_user_meta($user_id, 'last_login_ip', $ip_address);
+
+    // 更新设备信息
+    update_user_meta($user_id, 'login_device_info', $user_agent);
 
     // 更新最后登录时间
     update_user_meta($user_id, 'last_login_time', current_time('mysql'));
@@ -258,7 +308,9 @@ function wpbfd_display_user_time($value, $column_name, $user_id) {
             $user_time .= '注册时间: 未知<br>';
         }
         if ($last_login) {
-            $user_time .= '最后登录时间: ' . date('Y-m-d H:i:s', strtotime($last_login));
+            $user_time .= '最后登录时间: ' . date('Y-m-d H:i:s', strtotime($last_login)) . '<br>';
+            $login_device_info = get_user_meta($user_id, 'login_device_info', true);
+            $user_time .= '登录设备信息: ' . $login_device_info;
         } else {
             $user_time .= '最后登录时间: 未知';
         }
@@ -268,6 +320,14 @@ function wpbfd_display_user_time($value, $column_name, $user_id) {
 }
 add_filter('manage_users_custom_column', 'wpbfd_display_user_time', 10, 3);
 // 添加用户时间自定义列结束
+
+// 获取设备
+function wpbfd_add_device_meta_fields() {
+    
+    add_user_meta_field('login_device_info');
+}
+add_action('admin_init', 'wpbfd_add_device_meta_fields');
+// 获取设备结束
 
 // 消息提醒
 function wpbfd_optimize_add_lazy_loading_and_category_settings() {
@@ -361,6 +421,11 @@ function add_user_meta_field($field_name) {
 
 // 主页设置
 function wpdfdoptimize_main_page() {
+        // 检查用户权限
+    if (!current_user_can('manage_options')) {
+        wp_die('您无权限访问这个页面');
+    }
+    
     wpbfd_optimize_add_lazy_loading_and_category_settings();
 
     // 获取开关设置
@@ -423,7 +488,7 @@ function wpdfdoptimize_main_page() {
             </p>
 
             <p>
-                <label>显示用户时间(注册和登录)：</label>
+                <label>显示用户登录时间与设备信息：</label>
                 <label class="switch">
                     <input type="checkbox" name="show_user_time" value="1" <?php checked($enabled_user_time, '1'); ?>>
                     <span class="slider round"></span>
@@ -455,6 +520,26 @@ function wpdfdoptimize_main_page() {
             </div>
             <?php
         }
+        // 检测 Redis 扩展是否安装
+        if (extension_loaded('redis')) {
+            ?>
+            <p>Redis 扩展状态：<span style="color: green;">已安装</span></p>
+            <?php
+        } else {
+            ?>
+            <p>Redis 扩展状态：<span style="color: red;">未安装</span> 功能强大，但是也占用更多的内存，一般是大型网站特别是商城类使用更多.</p><?php
+        }
+        // 检测 Memcached 扩展是否安装
+        if (extension_loaded('memcached')) {
+            ?>
+            <p>Memcached 扩展状态：<span style="color: green;">已安装</span></p>
+            <?php
+        } else {
+            ?>
+            <p>Memcached 扩展状态：<span style="color: red;">未安装</span> 功能相对较少，一般比Redis占用更少的内存，普通博客网站够用了.</p>
+            <?php
+        }
+
         ?>
         <!-- 清除对象缓存按钮结束 -->
         <!-- 基础信息 -->
@@ -477,7 +562,7 @@ document.addEventListener('DOMContentLoaded', function () {
         event.preventDefault();
 
         try {
-            const response = await fetch('https://www.yourweb.com/pulginapi/WPBFD-version-check.php');
+            const response = await fetch('https://www.jingxialai.com/pulginapi/WPBFD-version-check.php');
 
             if (!response.ok) {
                 throw new Error('网络响应不正常');
@@ -616,46 +701,18 @@ function no_category_base_request($query_vars) {
 }
 
 
-// 菜单入口设置
-function wpbfd_optimize_menu() {
-    // 添加主菜单页
-add_menu_page(
-    'WPBFD Optimization设置说明',// 页面标题
-    'WPBFD设置',// 菜单标题
-    'manage_options',// 权限要求
-    'wpdfdoptimize',// 菜单Slug
-    'wpdfdoptimize_main_page',// 页面回调函数
-    'dashicons-superhero'// 图标
-    );
-    
-    // 添加子菜单
-add_submenu_page(
-    'wpdfdoptimize', // 父菜单Slug
-    'WPBFD基础功能优化', // 子菜单标题
-    '基础功能优化',// 子菜单标题
-    'manage_options',// 权限要求
-    'wpbf-basic-optimizer',// 子菜单Slug
-    'WPBF_plugin_options'// 页面回调函数
-);
+// 在插件激活和停用时刷新重写规则
+register_activation_hook(__FILE__, 'wpbfd_optimize_activate');
+register_deactivation_hook(__FILE__, 'wpbfd_optimize_deactivate');
 
-add_submenu_page(
-    'wpdfdoptimize', 
-    'WPBFD数据库优化',
-    '数据库优化',
-    'manage_options',
-    'wpbfd-database',
-    'optimize_postmeta_page'
-);
-    
-add_submenu_page(
-    'wpdfdoptimize', 
-    'WPBFD基础安全优化',
-    '基础安全优化',
-    'manage_options',
-    'wpbfd-surety',
-    'wpbfd_surety_settings_page'
-);  
-    
+function wpbfd_optimize_activate() {
+    // 在激活插件时刷新重写规则
+    flush_rewrite_rules();
+}
+
+function wpbfd_optimize_deactivate() {
+    // 在停用插件时刷新重写规则
+    flush_rewrite_rules();
 }
 
 /* 停用插件之后删掉数据库里面的设置值
