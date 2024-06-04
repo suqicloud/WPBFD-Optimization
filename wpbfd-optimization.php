@@ -3,7 +3,7 @@
 Plugin Name: WPBFD基础优化
 Plugin URI: https://www.jingxialai.com/4307.html
 Description: 一个Wordpress基础功能、数据库简单优化以及基础安全加固插件。
-Version: 2.0
+Version: 2.1
 Author: Summer
 License: GPL License
 Author URI: https://www.jingxialai.com/
@@ -329,6 +329,29 @@ function wpbfd_add_device_meta_fields() {
 add_action('admin_init', 'wpbfd_add_device_meta_fields');
 // 获取设备结束
 
+// 上传附件自动随机命名
+if (get_option('enable_random_attachment_name', '0') === '1') {
+    // 添加上传预处理过滤器
+    add_filter('wp_handle_upload_prefilter', 'rename_uploaded_file');
+
+    function rename_uploaded_file($file) {
+        // 检查 $file 是否被定义并且不为 null
+        if (isset($file) && isset($file['name'])) {
+            $file_info = pathinfo($file['name']);
+            $extension = isset($file_info['extension']) ? '.' . $file_info['extension'] : '';
+            $new_filename = date('YmdHis') . '_' . wp_generate_password(6, false) . $extension;
+            $file['name'] = $new_filename;
+        } else {
+            // 处理 $file 未定义或者为 null 的情况
+            // 例如：记录错误日志或者进行其他适当的处理
+            error_log("错误：文件未定义或者为 null");
+        }
+        return $file;
+    }
+}
+
+
+
 // 消息提醒
 function wpbfd_optimize_add_lazy_loading_and_category_settings() {
     if (isset($_POST['toggle_settings'])) {
@@ -380,6 +403,14 @@ function wpbfd_optimize_add_lazy_loading_and_category_settings() {
             }
         }
 
+        // 保存随机命名
+        $enable_random_attachment_name = isset($_POST['enable_random_attachment_name']) ? $_POST['enable_random_attachment_name'] : '0';
+        $result_enable_random_attachment_name = update_option('enable_random_attachment_name', $enable_random_attachment_name);
+        if ($result_enable_random_attachment_name) {
+            $settings_updated = true;
+        }
+
+
         if ($settings_updated) {
             ?>
             <div class="notice notice-success is-dismissible">
@@ -423,7 +454,7 @@ function add_user_meta_field($field_name) {
 function wpdfdoptimize_main_page() {
         // 检查用户权限
     if (!current_user_can('manage_options')) {
-        wp_die('您无权限访问这个页面');
+        return;
     }
     
     wpbfd_optimize_add_lazy_loading_and_category_settings();
@@ -435,6 +466,7 @@ function wpdfdoptimize_main_page() {
     $enabled_category = get_option('no_category_base_enabled', 'off'); // 获取分类链接设置
     $enabled_user_ip = get_option('wpbfd_optimize_get_user_ip', '0'); // 获取用户ip设置
     $enabled_user_time = get_option('wpbfd_optimize_show_user_time', '0'); // 获取用户时间设置
+    $enabled_random_attachment_name = get_option('enable_random_attachment_name', '0'); // 获取附件自动随机命名设置
 
     ?>
     <div class="wrap">
@@ -494,6 +526,15 @@ function wpdfdoptimize_main_page() {
                     <span class="slider round"></span>
                 </label>
             </p>
+
+            <p>
+                <label>上传附件自动随机命名：</label>
+                <label class="switch">
+                    <input type="checkbox" name="enable_random_attachment_name" value="1" <?php checked(get_option('enable_random_attachment_name', '0'), '1'); ?>>
+                    <span class="slider round"></span>
+                </label>
+            </p>
+
 
             <p>
                 <input type="submit" name="toggle_settings" class="button-primary" value="保存更改">
