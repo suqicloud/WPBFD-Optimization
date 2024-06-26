@@ -1,5 +1,6 @@
 # WPBFD Optimization
 Wordpress cache optimization
+CSDN不要来搬运！！！
 
 精力有限，大部分代码都是网上公开的文档、拆解其他插件和ai，然后整合的。
 
