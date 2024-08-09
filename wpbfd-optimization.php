@@ -3,7 +3,7 @@
 Plugin Name: WPBFD基础优化
 Plugin URI: https://www.jingxialai.com/4307.html
 Description: 一个Wordpress基础功能、数据库简单优化以及基础安全加固插件。
-Version: 2.1
+Version: 2.2
 Author: Summer
 License: GPL License
 Author URI: https://www.jingxialai.com/
@@ -329,6 +329,7 @@ function wpbfd_add_device_meta_fields() {
 add_action('admin_init', 'wpbfd_add_device_meta_fields');
 // 获取设备结束
 
+
 // 上传附件自动随机命名
 if (get_option('enable_random_attachment_name', '0') === '1') {
     // 添加上传预处理过滤器
@@ -349,8 +350,7 @@ if (get_option('enable_random_attachment_name', '0') === '1') {
         return $file;
     }
 }
-
-
+// 上传附件自动随机命名结束
 
 // 消息提醒
 function wpbfd_optimize_add_lazy_loading_and_category_settings() {
@@ -410,7 +410,6 @@ function wpbfd_optimize_add_lazy_loading_and_category_settings() {
             $settings_updated = true;
         }
 
-
         if ($settings_updated) {
             ?>
             <div class="notice notice-success is-dismissible">
@@ -454,7 +453,7 @@ function add_user_meta_field($field_name) {
 function wpdfdoptimize_main_page() {
         // 检查用户权限
     if (!current_user_can('manage_options')) {
-        return;
+        wp_die('您无权限访问这个页面');
     }
     
     wpbfd_optimize_add_lazy_loading_and_category_settings();
@@ -471,11 +470,7 @@ function wpdfdoptimize_main_page() {
     ?>
     <div class="wrap">
         <h1>WPBFD设置(一款代码开源的wordpress基础优化插件)</h1>
-        <!-- 新增检查更新按钮 -->
-        <p>
-           <button class="button-primary" id="check-for-updates">检查更新</button>
-        </p>
-        <!-- 新增检查更新按钮结束 -->
+
 
         <!-- 图片延迟加载和category按钮合并的表单 -->
         <form method="post" action="">
@@ -534,8 +529,7 @@ function wpdfdoptimize_main_page() {
                     <span class="slider round"></span>
                 </label>
             </p>
-
-
+            
             <p>
                 <input type="submit" name="toggle_settings" class="button-primary" value="保存更改">
             </p>
@@ -596,51 +590,6 @@ function wpdfdoptimize_main_page() {
 
     </div>
 <!-- 基础信息结束 -->
-<!--在插件设置页面上显示版本号和更新提示-->
-    <script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('check-for-updates').addEventListener('click', async function (event) {
-        event.preventDefault();
-
-        try {
-            const response = await fetch('https://www.jingxialai.com/pulginapi/WPBFD-version-check.php');
-
-            if (!response.ok) {
-                throw new Error('网络响应不正常');
-            }
-
-            const data = await response.json();
-            var pluginVersion = '1.3';
-            var downloadURL = data.download_url;
-            var releaseNotesURL = data.release_notes;
-
-            if (data.version > pluginVersion) {
-
-                showNotice('success', '已有新版本，请前往<a href="' + downloadURL + '" target="_blank">Github下载新版本</a>。 ' +
-                    '查看<a href="' + releaseNotesURL + '" target="_blank">查看新版本说明</a>.');
-            } else {
-                showNotice('info', '已经是最新版。');
-            }
-        } catch (error) {
-            showNotice('error', '检查更新失败：' + error.message);
-        }
-    });
-
-    // 显示WordPress样式的消息通知
-    function showNotice(type, message) {
-        var notice = document.createElement('div');
-        notice.className = 'notice notice-' + type + ' is-dismissible';
-        notice.innerHTML = '<p>' + message + '</p>';
-
-        // 触发 "检查更新" 按钮
-        var targetElement = document.getElementById('check-for-updates');
-        targetElement.parentNode.insertBefore(notice, targetElement);
-    }
-});
-
-    </script>
-
-<!--在插件设置页面上显示版本号和更新提示结束-->
     <?php
 }
 
