@@ -3,7 +3,7 @@
 Plugin Name: WPBFD基础优化
 Plugin URI: https://www.jingxialai.com/4307.html
 Description: 一个Wordpress基础功能、数据库简单优化以及基础安全加固插件。
-Version: 2.2
+Version: 2.5
 Author: Summer
 License: GPL License
 Author URI: https://www.jingxialai.com/
@@ -48,7 +48,7 @@ add_submenu_page(
     '基础功能优化',// 子菜单标题
     'manage_options',// 权限要求
     'wpbf-basic-optimizer',// 子菜单Slug
-    'WPBF_plugin_options'// 页面回调函数
+    'wpbfd_basic_page'// 页面回调函数
 );
 
 add_submenu_page(
@@ -469,7 +469,7 @@ function wpdfdoptimize_main_page() {
 
     ?>
     <div class="wrap">
-        <h1>WPBFD设置(一款代码开源的wordpress基础优化插件)</h1>
+        <h1>WPBFD基础优化设置(插件启用之后去保存下固定链接)</h1>
 
 
         <!-- 图片延迟加载和category按钮合并的表单 -->
@@ -571,7 +571,7 @@ function wpdfdoptimize_main_page() {
             <?php
         } else {
             ?>
-            <p>Memcached 扩展状态：<span style="color: red;">未安装</span> 功能相对较少，一般比Redis占用更少的内存，普通博客网站够用了.</p>
+            <p>Memcached 扩展状态：<span style="color: red;">未安装</span> 功能相对较少，一般比Redis占用更少的内存，以展示为主的网站够用了.</p>
             <?php
         }
 
@@ -705,7 +705,7 @@ function wpbfd_optimize_deactivate() {
     flush_rewrite_rules();
 }
 
-/* 停用插件之后删掉数据库里面的设置值
+// 卸载插件之后删掉数据库里面的设置值
 register_uninstall_hook(__FILE__, 'wpbfd_optimize_uninstall');
 
 function wpbfd_optimize_uninstall() {
@@ -738,4 +738,3 @@ function remove_user_meta_field($field_name) {
         )
     );
 }
-*/
