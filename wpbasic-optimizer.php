@@ -7,8 +7,8 @@ if (!defined('ABSPATH')) {
 }
 
 //设置页面
-function custom_admin_styles() {
-    if (!current_user_can('manage_options')) {
+function wpbfd_basic_page() {
+        if (!current_user_can('manage_options')) {
         wp_die('您无权限访问这个页面');
     }
 
@@ -62,14 +62,6 @@ function custom_admin_styles() {
             margin-top: 4px;
         }
     </style>
-    <?php
-    }
-}
-
-add_action('admin_head', 'custom_admin_styles');
-
-function WPBF_plugin_options() {
-    ?>
     <div class="wpbfdwrap">
         <h1>WPBFD - 基础优化选项</h1>
                 <?php
@@ -92,7 +84,7 @@ function WPBF_plugin_options() {
     </div>
     <?php
 }
-
+}
 //注册复选框
 function WPBF_custom_option_setup() {
     //隐藏左上角WordPress标志
@@ -245,7 +237,7 @@ add_settings_field('wpbf_remove-woocommerce-fields', '47、删除woocommerce邮�
 add_settings_field('wpbf_modify-woocommerce-checkout-labels', '49、简化woocommerce结算页面(仅保留联系人、地址、电话)', 'wpbf_modify_woocommerce_checkout_labels_callback', 'wpbf-basic-optimizer', 'section-one');
     //让网站变灰
     register_setting('WPBF-plugin-settings-group', 'wpbf_make_site_grayscale');
-    add_settings_field('wpbf_make-site-grayscale', '50、让网站变灰(某些日子可以用)', 'wpbf_make_site_grayscale_callback', 'wpbf-basic-optimizer', 'section-one');
+    add_settings_field('wpbf_make-site-grayscale', '50、让网站变灰(某些日子可以用，不一定兼容)', 'wpbf_make_site_grayscale_callback', 'wpbf-basic-optimizer', 'section-one');
 }
 
 
