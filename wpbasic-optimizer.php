@@ -63,7 +63,7 @@ function wpbfd_basic_page() {
         }
     </style>
     <div class="wpbfdwrap">
-        <h1>WPBFD - 基础优化选项</h1>
+        <h1>小半优化助手 - 基础优化选项</h1>
                 <?php
         if (isset($_GET['settings-updated']) && $_GET['settings-updated']) {
             ?>
@@ -75,7 +75,7 @@ function wpbfd_basic_page() {
         ?>
 
         <font style="color: #FF3300;">在这里配置基础选项，一个个测试保存，然后在新窗口看看网站是否正常，因为有的功能可能和你的主题或其他插件有冲突。</font><br>部分功能和页面有关，网站有缓存插件就先禁用，不然你也不知道是否生效了，正常之后再启用，有开启CDN就要去刷新页面之后查看。<br>
-        很多中文主题都已经做好相关基础优化了，反正根据你自己的主题和其他插件来，插件详情查看：<a href="https://www.jingxialai.com/4307.html" target="_blank">WPBFD Optimization</a></p>
+        很多中文主题都已经做好相关基础优化了，反正根据你自己的主题和其他插件来，插件详情查看：<a href="https://www.jingxialai.com/4307.html" target="_blank">小半WP优化助手</a></p>
         <form method="post" action="options.php">
             <?php settings_fields('WPBF-plugin-settings-group'); ?>
             <?php do_settings_sections('wpbf-basic-optimizer'); ?>
@@ -188,7 +188,7 @@ function WPBF_custom_option_setup() {
     add_settings_field('wpbf_remove-jquery-migrate', '33、移除jquery-migrate.min.js(兼容老jquery)(<span style="color:blue;">如果你确定你的主题或其他插件不依赖它</span>)', 'wpbf_remove_jquery_migrate_callback', 'wpbf-basic-optimizer', 'section-one'); 
     // 禁用文章自动保存、修订版本、id不连贯的问题
     register_setting('WPBF-plugin-settings-group', 'wpbf_disable_autosave_revisions_inconsistency'); 
-    add_settings_field('wpbf_disable-autosave-revisions-inconsistency', '34、禁用文章自动保存(<span style="color:blue;">媒体、页面等依旧会占用id,开启后不能发布文章就取消，可能是不兼容，</span>)', 'wpbf_disable_autosave_revisions_inconsistency_callback', 'wpbf-basic-optimizer', 'section-one'); 
+    add_settings_field('wpbf_disable-autosave-revisions-inconsistency', '34、禁用文章自动保存(<span style="color:blue;">媒体、页面等依旧会占用id,开启后不能发布文章就取消，可能是不兼容</span>)', 'wpbf_disable_autosave_revisions_inconsistency_callback', 'wpbf-basic-optimizer', 'section-one'); 
     //隐藏仪表盘的概况
     register_setting('WPBF-plugin-settings-group', 'wpbf_hide_dashboard_overview');
     add_settings_field('wpbf_hide-dashboard-overview', '35、隐藏仪表盘的概况模块', 'wpbf_hide_dashboard_overview_callback', 'wpbf-basic-optimizer', 'section-one');

@@ -1,9 +1,9 @@
 <?php
 /*
-Plugin Name: WPBFD基础优化
+Plugin Name: 小半WP优化助手
 Plugin URI: https://www.jingxialai.com/4307.html
 Description: 一个Wordpress基础功能、数据库简单优化以及基础安全加固插件。
-Version: 2.5
+Version: 2.6
 Author: Summer
 License: GPL License
 Author URI: https://www.jingxialai.com/
@@ -33,8 +33,8 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'wpbfd_optimize_s
 function wpbfd_optimize_menu() {
     // 添加主菜单页
 add_menu_page(
-    'WPBFD Optimization设置说明',// 页面标题
-    'WPBFD设置',// 菜单标题
+    '小半WP优化助手设置说明',// 页面标题
+    '小半优化设置',// 菜单标题
     'manage_options',// 权限要求
     'wpdfdoptimize',// 菜单Slug
     'wpdfdoptimize_main_page',// 页面回调函数
@@ -44,7 +44,7 @@ add_menu_page(
     // 添加子菜单
 add_submenu_page(
     'wpdfdoptimize', // 父菜单Slug
-    'WPBFD基础功能优化', // 子菜单标题
+    '小半WP优化助手基础功能优化', // 子菜单标题
     '基础功能优化',// 子菜单标题
     'manage_options',// 权限要求
     'wpbf-basic-optimizer',// 子菜单Slug
@@ -53,7 +53,7 @@ add_submenu_page(
 
 add_submenu_page(
     'wpdfdoptimize', 
-    'WPBFD数据库优化',
+    '小半WP优化助手数据库优化',
     '数据库优化',
     'manage_options',
     'wpbfd-database',
@@ -62,7 +62,7 @@ add_submenu_page(
     
 add_submenu_page(
     'wpdfdoptimize', 
-    'WPBFD基础安全优化',
+    '小半WP优化助手基础安全优化',
     '基础安全优化',
     'manage_options',
     'wpbfd-surety',
@@ -578,7 +578,7 @@ function wpdfdoptimize_main_page() {
         ?>
         <!-- 清除对象缓存按钮结束 -->
         <!-- 基础信息 -->
-        <p>WPBFD Optimization 基础说明：</p>
+        <p>小半WP优化助手基础说明：</p>
         1、插件可能不兼容你的网站(和主题或其他插件冲突)，如果你在主题functions.php里面加过相关功能代码，先去删掉<br>
         2、现在很多主题也自带很多优化功能了，对比下主题的功能，尽量不要重复了<br>
         3、先禁用其他优化插件(比如Autoptimize、WP Super Cache等)，测试正常之后，再去启用这些插件；如果你网站开启了CDN，去刷新下CDN再看<br>
@@ -586,7 +586,7 @@ function wpdfdoptimize_main_page() {
         5、如果你网站有开启Redis、Memcached对象缓存，基础功能优化之后就清除下对象缓存，如果没有就不用点<br>
         6、如果插件一启用就造成网站不正常，代码冲突引起的，就去服务器里面删掉这个插件文件夹，名称：WPBFDoptimizations<br>
         7、可以联系我进行反馈，根据具体错误原因，之后更新兼容，也可以自己看代码修复.<br>
-        8、插件相关函数说明查看：<a href="https://www.jingxialai.com/4307.html" target="_blank">WPBFD Optimization</a>方便你自己更改增加代码 ｜ GitHub下载：<a href="https://www.jingxialai.com/4307.html" target="_blank">WPBFD Optimization</a><br>
+        8、插件相关函数说明查看：<a href="https://www.jingxialai.com/4307.html" target="_blank">小半WP优化助手</a>方便你自己更改增加代码 ｜ GitHub下载：<a href="https://www.jingxialai.com/4307.html" target="_blank">小半WP优化助手</a><br>
 
     </div>
 <!-- 基础信息结束 -->

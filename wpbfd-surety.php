@@ -70,15 +70,28 @@ function wpbfd_surety_settings_page() {
                 cursor: pointer;
             }
 
-            .wpbfd-surety-notice.custom-notice {
-                background-color: #4CAF50;
-                color: #fff;
+            .wpbfd-surety-notice {
                 padding: 10px;
                 border-radius: 5px;
                 max-width: 90%;
-                box-shadow: 0 0 10px rgba(0,0,0,0.1);
                 margin: 10px auto;
+                font-size: 14px;
+                opacity: 1;
+                transition: opacity 0.5s ease;
             }
+            .wpbfd-surety-notice.success {
+                background-color: #4CAF50;
+                color: #fff;
+            }
+            .wpbfd-surety-notice.error {
+                background-color: #f44336;
+                color: #fff;
+            }
+            .wpbfd-surety-notice.hidden {
+                opacity: 0;
+                display: none;
+            }
+
             .wpbfd-surety-form-table {
                 width: 100%;
             }
@@ -119,15 +132,26 @@ function wpbfd_surety_settings_page() {
 
         </style>
 
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+            const notices = document.querySelectorAll('.wpbfd-surety-notice');
+            notices.forEach(notice => {
+                setTimeout(() => {
+                    notice.classList.add('hidden');
+                }, 3000);
+            });
+        });
+        </script>
+
     <div class="wrap">
-        <h2>WPBFD 基础安全优化</h2>
+        <h2>小半WP优化助手 - 基础安全优化</h2>
         <?php if ( $settings_saved ) : ?>
-            <div class="wpbfd-surety-notice custom-notice">
+            <div class="wpbfd-surety-notice success">
                 保存成功!
             </div>
         <?php endif; ?>
         <?php if ( $settings_failed ) : ?>
-            <div class="wpbfd-surety-notice custom-notice">
+            <div class="wpbfd-surety-notice error">
                 保存失败，原因未知.
             </div>
         <?php endif; ?>
@@ -178,7 +202,15 @@ function wpbfd_surety_settings_page() {
             <?php submit_button(); ?>
         </form>
     </div>
-    
+
+    <div class="wrap">
+        <form method="post" action="options.php" class="wpbfd-surety-form-table">
+            <?php settings_fields('wpbfd_surety_disable_user_sitemap_group'); ?>
+            <?php do_settings_sections('wpbfd-surety-disable-user-sitemap-settings'); ?>
+            <?php submit_button(); ?>
+        </form>
+    </div>
+        
     <?php
 }
 }
@@ -580,7 +612,50 @@ function wpbfd_surety_hide_password_reset_link() {
 }
 // 关闭找回密码结束
 
-/*// 插件主文件中添加插件卸载钩子
+// 屏蔽用户Sitemap功能开始
+add_action('admin_init', 'wpbfd_surety_settings_disable_user_sitemap_init');
+function wpbfd_surety_settings_disable_user_sitemap_init() {
+    register_setting('wpbfd_surety_disable_user_sitemap_group', 'wpbfd_surety_disable_user_sitemap');
+
+    add_settings_section(
+        'wpbfd_surety_disable_user_sitemap_section',
+        '屏蔽默认用户Sitemap',
+        'wpbfd_surety_disable_user_sitemap_section_callback',
+        'wpbfd-surety-disable-user-sitemap-settings'
+    );
+
+    add_settings_field(
+        'wpbfd_surety_disable_user_sitemap_field',
+        '禁用默认用户Sitemap',
+        'wpbfd_surety_disable_user_sitemap_field_callback',
+        'wpbfd-surety-disable-user-sitemap-settings',
+        'wpbfd_surety_disable_user_sitemap_section'
+    );
+}
+
+function wpbfd_surety_disable_user_sitemap_section_callback() {
+    echo '勾选后将禁止生成用户相关的Sitemap文件（如 wp-sitemap-users-1.xml），有助于防止用户名泄露。';
+}
+
+function wpbfd_surety_disable_user_sitemap_field_callback() {
+    $disable_user_sitemap = get_option('wpbfd_surety_disable_user_sitemap', '');
+    echo '<input type="checkbox" name="wpbfd_surety_disable_user_sitemap" value="1" ' . checked($disable_user_sitemap, '1', false) . ' />';
+    echo '<label>禁用默认的用户users地图xml</label>';
+}
+
+// 移除用户sitemap
+add_filter('wp_sitemaps_add_provider', 'wpbfd_surety_maybe_disable_user_sitemap_provider', 10, 2);
+function wpbfd_surety_maybe_disable_user_sitemap_provider($provider, $name) {
+    $disable_user_sitemap = get_option('wpbfd_surety_disable_user_sitemap', '');
+
+    if ($disable_user_sitemap === '1' && $name === 'users') {
+        return null;
+    }
+    return $provider;
+}
+// 屏蔽用户Sitemap功能结束
+
+// 插件主文件中添加插件卸载钩子
 register_uninstall_hook(__FILE__, 'wpbfd_surety_plugin_uninstall');
 
 // 当插件被卸载时执行的函数
@@ -597,6 +672,7 @@ function wpbfd_surety_plugin_uninstall() {
     delete_option('wpbfd_surety_redirect_url');
     delete_option('wpbfd_surety_max_devices_count');
     delete_option('wpbfd_surety_max_devices_redirect_url');
+    delete_option('wpbfd_surety_disable_user_sitemap');
 }
-*/
+
 ?>

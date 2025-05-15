@@ -3,7 +3,17 @@
 //by summer
 //https://www.jingxialai.com/4307.html
 // 插件设置页面内容
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function optimize_postmeta_page() {
+
+    if (!current_user_can('manage_options')) {
+        wp_die('您无权限访问这个页面');
+    }
+
      global $wpdb;
     ?>
 <style>
@@ -98,7 +108,7 @@ function optimize_postmeta_page() {
 
     <div class="wrap">
                 <div class="optimize-section">
-            <h2>WPBFD - 数据库基础优化</h2>
+            <h2>小半WP优化助手 - 数据库基础优化</h2>
             <p style="color: #FF0000; font-weight: bold;;">和数据库有关的操作，一定要先备份数据库！请提前备份数据库！请提前备份数据库！</p>
             关于Wordpress数据库优化详细说明：<a href="https://www.jingxialai.com/2472.html" target="_blank">数据库优化</a> 如果你对数据库不熟，尽量先看下说明，当然前提依旧先备份数据库！
         </div>
