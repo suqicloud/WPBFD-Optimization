@@ -3,11 +3,12 @@
 Plugin Name: 小半WP优化助手
 Plugin URI: https://www.jingxialai.com/4307.html
 Description: 一个Wordpress基础功能、数据库简单优化以及基础安全加固插件。
-Version: 2.6
+Version: 2.7
 Author: Summer
 License: GPL License
 Author URI: https://www.jingxialai.com/
 */
+
 
 if (!defined('ABSPATH')) {
     exit;
@@ -192,6 +193,55 @@ function wpbfd_optimize_add_lazy_loading($content) {
 add_filter('the_content', 'wpbfd_optimize_add_lazy_loading');
 // 图片延迟加载结束
 
+// 图片转换为WebP格式显示开始
+function wpbfd_optimize_convert_to_webp($content) {
+    if (get_option('wpbfd_optimize_convert_to_webp') === '1') {
+        global $post;
+        preg_match_all('/<img (.*?)src=["\'](.*?)["\'](.*?)\/>/', $content, $images);
+        if (!is_null($images)) {
+            foreach ($images[2] as $index => $src) {
+                // 检查图片是否为jpg或png格式
+                if (preg_match('/\.(jpg|jpeg|png)$/i', $src)) {
+                    // 获取图片路径和文件名
+                    $image_path = parse_url($src, PHP_URL_PATH);
+                    $upload_dir = wp_upload_dir();
+                    $full_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $src);
+                    
+                    // 生成WebP路径
+                    $webp_path = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $full_path);
+                    $webp_url = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $src);
+                    
+                    // 检查WebP文件是否已存在
+                    if (!file_exists($webp_path)) {
+                        // 尝试创建WebP版本
+                        $image = false;
+                        if (preg_match('/\.(jpg|jpeg)$/i', $src)) {
+                            $image = imagecreatefromjpeg($full_path);
+                        } elseif (preg_match('/\.png$/i', $src)) {
+                            $image = imagecreatefrompng($full_path);
+                        }
+                        
+                        if ($image) {
+                            // 转换为WebP
+                            imagewebp($image, $webp_path, 80); // 80是WebP的质量参数
+                            imagedestroy($image);
+                        }
+                    }
+                    
+                    // 如果WebP文件存在，替换原图URL
+                    if (file_exists($webp_path)) {
+                        $new_img = str_replace($src, $webp_url, $images[0][$index]);
+                        $content = str_replace($images[0][$index], $new_img, $content);
+                    }
+                }
+            }
+        }
+    }
+    return $content;
+}
+add_filter('the_content', 'wpbfd_optimize_convert_to_webp');
+// 图片转换为WebP格式显示结束
+
 // 添加图片alt开始
 function wpbfd_optimize_add_image_alt($content) {
     if (get_option('wpbfd_optimize_add_image_alt') === '1') {
@@ -371,6 +421,13 @@ function wpbfd_optimize_add_lazy_loading_and_category_settings() {
             $settings_updated = true;
         }
 
+        // 保存图片转换为WebP设置
+        $convert_to_webp_value = isset($_POST['convert_to_webp']) ? $_POST['convert_to_webp'] : '0';
+        $result_convert_to_webp = update_option('wpbfd_optimize_convert_to_webp', $convert_to_webp_value);
+        if ($result_convert_to_webp) {
+            $settings_updated = true;
+        }
+
         // 保存添加图片alt设置
         $add_image_alt_value = isset($_POST['add_image_alt']) ? $_POST['add_image_alt'] : '0';
         $result_add_image_alt = update_option('wpbfd_optimize_add_image_alt', $add_image_alt_value);
@@ -462,6 +519,7 @@ function wpdfdoptimize_main_page() {
     $enabled_lazy_loading = get_option('wpbfd_optimize_lazy_loading', '0'); // 获取图片延迟加载
     $enabled_hide_cover_image = get_option('wpbfd_optimize_hide_cover_image', '0');  // 获取文中图片
     $enabled_add_image_alt = get_option('wpbfd_optimize_add_image_alt', '0'); // 获取图片标题属性设置
+    $enabled_convert_to_webp = get_option('wpbfd_optimize_convert_to_webp', '0'); // 获取webp设置
     $enabled_category = get_option('no_category_base_enabled', 'off'); // 获取分类链接设置
     $enabled_user_ip = get_option('wpbfd_optimize_get_user_ip', '0'); // 获取用户ip设置
     $enabled_user_time = get_option('wpbfd_optimize_show_user_time', '0'); // 获取用户时间设置
@@ -469,7 +527,7 @@ function wpdfdoptimize_main_page() {
 
     ?>
     <div class="wrap">
-        <h1>WPBFD基础优化设置(插件启用之后去保存下固定链接)</h1>
+        <h1>小半WP优化助手  - 基础优化设置(插件设置之后最好去保存下固定链接)</h1>
 
 
         <!-- 图片延迟加载和category按钮合并的表单 -->
@@ -497,7 +555,15 @@ function wpdfdoptimize_main_page() {
                     <span class="slider round"></span>
                 </label>
             </p>
-            
+
+            <p>
+                <label>将文章图片转换为WebP格式(需要启用完整的GD库)：</label>
+                <label class="switch">
+                    <input type="checkbox" name="convert_to_webp" value="1" <?php checked($enabled_convert_to_webp, '1'); ?>>
+                    <span class="slider round"></span>
+                </label>
+            </p>
+
             <p>
                 <label>删掉分类中间的category链接：</label>
                 <label class="switch">
@@ -713,6 +779,7 @@ function wpbfd_optimize_uninstall() {
     delete_option('wpbfd_optimize_lazy_loading');
     delete_option('wpbfd_optimize_hide_cover_image');
     delete_option('wpbfd_optimize_add_image_alt');
+    delete_option('wpbfd_optimize_convert_to_webp');
     delete_option('no_category_base_enabled');
     delete_option('wpbfd_optimize_get_user_ip');
     delete_option('wpbfd_optimize_show_user_time');
